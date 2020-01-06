@@ -1,0 +1,165 @@
+\documentclass{article}
+
+\usepackage{multirow}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{mathtools}
+
+\DeclarePairedDelimiter\ceil{\lceil}{\rceil}
+\DeclarePairedDelimiter\floor{\lfloor}{\rfloor}
+
+\title{Homework Three}
+\date{07 jan 2020}
+\author{Iacobescu Tudor, A6}
+
+% preamble stuff for centering every figure
+\makeatletter
+\g@addto@macro\@floatboxreset\centering
+\makeatother
+
+\begin{document}
+\maketitle
+\pagenumbering{arabic}
+
+\section{Introduction}
+\paragraph{}
+This document means to examine the potential use of a genetic algorithm\cite{breaban} in solving a real-world problem: the NP-complete problem of Satsfiability (or SAT). We will find, unfortunately, that our attempt yields unsatisfying results. 
+\paragraph{}
+We will compare our algorithm with a random search algorithm to see how it performs, and why it's likely that the SAT problem requires a more specialized algorithm to be solved effectively.
+\section{Satisfiability problem}
+\subsection{Decision problem}
+\paragraph{}
+SAT is the first known NP-complete problem. It is defined as such:
+
+$$input: \text{a propositional logic formula } S$$
+$$output: \text{is } S \text{ satisfiable?}$$
+
+\paragraph{}
+A propositional logic formula is built from literals (representing boolean variables) and operators (AND, OR, NOT, and parantheses). A formula is said to be satisfiable if there exists a configuration of TRUE / FALSE values that can be assigned to its variables so that the value of the entire formula is TRUE. 
+
+\subsection{Conjunctive normal form}
+\paragraph{}
+Using the laws of boolean algebra, any propositional logic formula can be transformed into an equivalent conjunctive normal form - a conjunction (AND) of a number of clauses (disjunctions (OR) of a number of variables). This form can, however, be exponentially longer, but easier to properly analyze.
+
+\subsection{Optimization problem}
+\paragraph{}
+A genetic algorithm cannot solve a decision problem. Genetic algorithms require a "gradient" - a gradual increase in the fitness landscape that allows the algorithm to climb towards better values. A decision problem doesn't have a gradient - a formula can either be satisfiable or unsatisfiable, and a configuration of values for the variables can either satisfy it or not.
+
+\paragraph{}
+One way to allow a genetic algorithm to attempt to solve the problem is by turning it into an optimization or maximization problem. The algorithm tries to find a configuration that satisfies the maximum number of clauses in the CNF of the formula - if it finds a configuration that satisfies all of the clauses, then the formula is satisfiable. In this way, a configuration satisfying more clauses is considered to have a larger fitness value than one that satisfies fewer.
+
+\section{Method}
+\paragraph{}
+The test will run a genetic algorithm and a random search algorithm, both implemented in C++, against a set of 10 formulas in CNF. These formulas are inputted as text files in the DIMACS CNF format, obtained from the website of the Department of Scientific Computing of the Florida State University\cite{burkardt_2008}. 
+\paragraph{}
+These files give the number of literals and clauses in the formula, as well as each clause formulated as a list of positive or negative integers. The absolute value of the integer represents the index of a literal, and the sign represents its value in the clause (i.e. if it is negated). 
+\paragraph{}
+For example, the formula $(a \vee b) \wedge (b \vee \neg c \vee \neg d)$ can be represented as the following list of integer lists (clauses), where each integer corresponds to a literal: 
+$$[[1, 2], [2, -3, -4]]$$
+
+\paragraph{}
+A configuration for a certain formula is a list of boolean values, with the index in the list corresponding to the index of the literal as presented above. One configuration that can satisfy the above formula is this:
+$$[true, true, false, false]$$
+\subsection{Algorithm}
+\paragraph{}
+The test runner reads the files in the expected DIMANCS CNF format, ignoring comments, getting the number of literals and clauses from the problem line, and then reading the zero-terminated lists of characters. This data, encapsulated in a single object, is sent to the appropriate algorithm. 
+\subsubsection{Genetic algorithm}
+\paragraph{}
+The genetic algorithm is similar to the one used previously on Homework Two, with some changes specific to the problem made to try and enhance its performance. 
+
+\paragraph{Mutation}
+While the crossover operator is the same, the mutation operator is changed in a way that should be, in theory, more helpful to the problem. After doing the standard set of random changes to an individual, it will then loop through the clauses of the formula and change the value of a random variable in clauses that are not satisfied by the configuration - a "positive mutation".
+
+\begin{verbatim}
+function mutate_SAT(population, problem):
+    for individual in population:
+        for boolean in individual:
+            if randomFloat(0, 1) < 0.2 / individual.size():
+                boolean = !boolean
+        for clause in problem.clauses:
+            if !satisfiedBy(individual, clause):
+                positiveMutation(individual, clause)
+
+function positiveMutation(individual, clause):
+    index = randomInt(clause.size())
+    value = clause[index]
+    individual[abs(value) - 1] = (value > 0)
+\end{verbatim}
+
+\paragraph{Selection}
+Selection has a few changes as well. A couple of new optimizations were the addition of elitism (the best 10 individuals from every generation are guaranteed to be kept), and that of completely random individuals (also 10). 
+
+\subsubsection{Random search}
+The random search algorithm is simple, designed mostly for comparison with the genetic one. It randomly generates configurations for ten minutes, and stores the best one.
+
+\begin{verbatim}
+function randomGeneration(problem):
+    startTime = time()
+    bestEval = 0
+    
+    i = 0
+    while (true):
+        individual = generateIndividual()
+        currentEval = eval(individual)
+        if currentEval > bestEval:
+            bestEval = currentEval
+            bestIndividual = individual
+        i++
+        if (i > 200):
+            if time() - startTime() > tenMinutes():
+                break
+    
+    return { bestEval, bestIndividual }
+\end{verbatim}
+
+\section{Experiment}
+Both algorithms were ran 30 times in parallel, their execution limited to 600000 ms (10 minutes). The genetic algorithm had 100 individuals per generation, and a limit of 3000 generations. The results of both algorithms are summed up in the table below.
+
+\section{Results}
+\begin{table}[!h]
+    \setlength\tabcolsep{3pt}
+    \begin{tabular}{|r|ccc|l|lll|ll|}
+    \hline
+                        & \#lit                 & \#cl                  & S                  &   & rMean   & rSDev & rMax & tMean     & tSDev   \\ \hline
+    \multirow{2}{*}{1}  & \multirow{2}{*}{50}   & \multirow{2}{*}{80}   & \multirow{2}{*}{Y} & G & 76.20 & 0.61 & 77 & 134649.43 & 2695.90 \\  \cline{5-10}
+                        &                       &                       &                    & R & 78.10   & 0.31  & 79   & 600002.77 & 4.42    \\ \hline
+    \multirow{2}{*}{2}  & \multirow{2}{*}{100}  & \multirow{2}{*}{160}  & \multirow{2}{*}{N} & G & 152.47 & 1.01 & 155 & 233597.50 & 3804.20 \\ \cline{5-10} 
+                        &                       &                       &                    & R & 153.77  & 0.57  & 155  & 600004.43 & 6.32    \\ \hline
+    \multirow{2}{*}{3}  & \multirow{2}{*}{1040} & \multirow{2}{*}{3668} & \multirow{2}{*}{?} & G & 3335.20 & 32.44 & 3394 & 600568.33 & 248.08  \\ \cline{5-10} 
+                        &                       &                       &                    & R & 3125.70 & 8.67  & 3154 & 600007.67 & 9.89    \\ \hline
+    \multirow{2}{*}{4}  & \multirow{2}{*}{60}   & \multirow{2}{*}{160}  & \multirow{2}{*}{N} & G & 154.00 & 1.55 & 157 & 219379.43 & 3937.70 \\ \cline{5-10} 
+                        &                       &                       &                    & R & 154.60  & 0.81  & 155  & 600007.07 & 6.91    \\ \hline
+    \multirow{2}{*}{5}  & \multirow{2}{*}{63}   & \multirow{2}{*}{168}  & \multirow{2}{*}{N} & G & 161.67 & 1.09 & 165 & 228201.57 & 5068.99 \\ \cline{5-10} 
+                        &                       &                       &                    & R & 161.60  & 0.93  & 163  & 600005.13 & 6.08    \\ \hline
+    \multirow{2}{*}{6}  & \multirow{2}{*}{66}   & \multirow{2}{*}{176}  & \multirow{2}{*}{N} & G & 168.93 & 1.34 & 171 & 221102.30 & 3281.13 \\ \cline{5-10} 
+                        &                       &                       &                    & R & 169.27  & 0.69  & 171  & 600002.43 & 3.89    \\ \hline
+    \multirow{2}{*}{7}  & \multirow{2}{*}{42}   & \multirow{2}{*}{133}  & \multirow{2}{*}{N} & G & 129.67 & 0.48 & 130 & 144092.10 & 2267.90 \\ \cline{5-10} 
+                        &                       &                       &                    & R & 130.63  & 0.49  & 131  & 600003.80 & 5.60    \\ \hline
+    \multirow{2}{*}{8}  & \multirow{2}{*}{64}   & \multirow{2}{*}{254}  & \multirow{2}{*}{?} & G & 238.47 & 2.30 & 243 & 299323.43 & 4745.90 \\ \cline{5-10} 
+                        &                       &                       &                    & R & 238.43  & 1.07  & 241  & 600003.17 & 4.60    \\ \hline
+    \multirow{2}{*}{9}  & \multirow{2}{*}{16}   & \multirow{2}{*}{18}   & \multirow{2}{*}{Y} & G & 17.20 & 0.41 & 18 & 25006.57 & 12730.59 \\ \cline{5-10} 
+                        &                       &                       &                    & R & 18.00   & 0.00  & 18   & 113.37    & 117.69  \\ \hline
+    \multirow{2}{*}{10} & \multirow{2}{*}{155}  & \multirow{2}{*}{1135} & \multirow{2}{*}{Y} & G & 1113.40 & 2.57 & 1118.00 & 600090.03 & 59.75 \\ \cline{5-10} 
+                        &                       &                       &                    & R & 1058.07 & 4.28  & 1064 & 600003.47 & 5.12    \\ \hline
+    \end{tabular}
+    \caption{Results table.}
+    \end{table}
+\noindent
+\#lit = number of literals in a formula \\
+\#cl = number of clauses in a formula \\
+S = is the given formula satisfiable? (yes, no, or unknown) \\
+rMean, rSDev, rMax = mean, standard deviation and maximum value for the number of clauses satisfied by the algorithm \\
+tMean, tSDev = mean and standard deviation of time taken
+\section{Result analysis}
+\paragraph{}
+At larger numbers of literals and clauses, the genetic algorithm outperforms the random search. At smaller scales, however, the random search algorithm gives similar results. As such, the genetic algorithm is more useful on large problems. 
+
+\paragraph{}
+Neither algorithm managed to satisfy all clauses for any of the test cases, except for the simplest one, where the number of literals was small enough for the random search algorithm to find a solution very fast.
+
+\section{Conclusion}
+While a genetic algorithm can have applications in problems of satisfiability, it is more useful on large numbers of literals and problems where satisfying large numbers of clauses is more important than answering the question of satisfiability. In the end, it's likely that genetic algorithms are not the ideal solution for satisfiability problems\cite{harmeling_2000}, but as before, they prove to be possible solutions to a wide range of problems with only small specific optimizations.
+
+\bibliography{bibliography.bib}
+\bibliographystyle{ieeetr}
+\end{document}

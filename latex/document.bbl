@@ -1,0 +1,19 @@
+\begin{thebibliography}{1}
+
+\bibitem{breaban}
+M.~Breaban, ``Algoritmi genetici.''
+  \url{https://profs.info.uaic.ro/~pmihaela/GA/laborator3.html}.
+\newblock Accessed on 6 nov 2020.
+
+\bibitem{burkardt_2008}
+J.~Burkardt, ``{CNF} files.''
+  \url{https://people.sc.fsu.edu/~jburkardt/data/cnf/cnf.html}, May 2008.
+\newblock Accessed on 6 nov 2020.
+
+\bibitem{harmeling_2000}
+S.~Harmeling, ``Solving satisfability problems with genetic algorithms.''
+  \url{https://is.tuebingen.mpg.de/fileadmin/user_upload/files/publications/genetic_sat_[0].pdf},
+  March 2000.
+\newblock Accessed on 6 nov 2020.
+
+\end{thebibliography}

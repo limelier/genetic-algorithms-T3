@@ -1,0 +1,13 @@
+\BOOKMARK [1][-]{section.1}{Introduction}{}% 1
+\BOOKMARK [1][-]{section.2}{Satisfiability problem}{}% 2
+\BOOKMARK [2][-]{subsection.2.1}{Decision problem}{section.2}% 3
+\BOOKMARK [2][-]{subsection.2.2}{Conjunctive normal form}{section.2}% 4
+\BOOKMARK [2][-]{subsection.2.3}{Optimization problem}{section.2}% 5
+\BOOKMARK [1][-]{section.3}{Method}{}% 6
+\BOOKMARK [2][-]{subsection.3.1}{Algorithm}{section.3}% 7
+\BOOKMARK [3][-]{subsubsection.3.1.1}{Genetic algorithm}{subsection.3.1}% 8
+\BOOKMARK [3][-]{subsubsection.3.1.2}{Random search}{subsection.3.1}% 9
+\BOOKMARK [1][-]{section.4}{Experiment}{}% 10
+\BOOKMARK [1][-]{section.5}{Results}{}% 11
+\BOOKMARK [1][-]{section.6}{Result analysis}{}% 12
+\BOOKMARK [1][-]{section.7}{Conclusion}{}% 13
